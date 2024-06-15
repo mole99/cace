@@ -24,27 +24,31 @@
   inputs = {
     nix-eda.url = github:efabless/nix-eda;
     volare.url = github:efabless/volare;
+    devshell.url = github:numtide/devshell;
     flake-compat.url = "https://flakehub.com/f/edolstra/flake-compat/1.tar.gz";
   };
 
   inputs.volare.inputs.nixpkgs.follows = "nix-eda/nixpkgs";
+  inputs.devshell.inputs.nixpkgs.follows = "nix-eda/nixpkgs";
 
   outputs = {
     self,
     nix-eda,
     volare,
+    devshell,
     ...
-  }: let
-    package-config = {
-      current = self;
-      withInputs = [nix-eda volare];
-    };
-  in {
+  }: {
+    # Common
+    input-overlays = [
+      (import ./nix/overlay.nix)
+      (devshell.overlays.default)
+    ];
+    
     # Helper functions
     createCaceShell = import ./nix/create-shell.nix;
 
     # Outputs
-    packages = nix-eda.forAllSystems package-config (util:
+    packages = nix-eda.forAllSystems { current = self; withInputs = [nix-eda volare]; } (util:
       with util;
         rec {
           colab-env = callPackage ./nix/colab-env.nix {};
@@ -53,7 +57,7 @@
         }
         // (pkgs.lib.optionalAttrs (pkgs.stdenv.isLinux) {cace-docker = callPackage ./nix/docker.nix {createDockerImage = nix-eda.createDockerImage;};}));
 
-    devShells = nix-eda.forAllSystems package-config (
+    devShells = nix-eda.forAllSystems { withInputs = [self devshell nix-eda volare]; } (
       util:
         with util; rec {
           default =

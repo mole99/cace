@@ -25,7 +25,7 @@
   coreutils,
   graphviz,
   python3,
-  mkShell,
+  devshell,
 }: let
   cace-env = (
     python3.withPackages (pp:
@@ -36,28 +36,33 @@
         ++ extra-python-packages)
   );
   cace-env-sitepackages = "${cace-env}/${cace-env.sitePackages}";
+  prompt = ''\[\033[1;32m\][nix-shell:\w]\$\[\033[0m\] '';
+  packages =
+  [
+    cace-env
+
+    # Conveniences
+    git
+    zsh
+    delta
+    neovim
+    gtkwave
+    coreutils
+    graphviz
+  ]
+  ++ extra-packages
+  ++ cace.includedTools;
 in
-  mkShell {
-    name = "cace-shell";
-
-    propagatedBuildInputs =
-      [
-        cace-env
-
-        # Conveniences
-        git
-        zsh
-        delta
-        neovim
-        gtkwave
-        coreutils
-        graphviz
-      ]
-      ++ extra-packages
-      ++ cace.includedTools;
-
-    PYTHONPATH = "${cace-env-sitepackages}"; # Allows venvs to work properly
-    shellHook = ''
-      export PS1="\n\[\033[1;32m\][nix-shell:\w]\$\[\033[0m\] ";
-    '';
+  devshell.mkShell {
+    devshell.packages = packages;
+    env = [
+      {
+        name = "PYTHONPATH";
+        value = "${cace-env-sitepackages}";
+      }
+    ];
+    devshell.interactive.PS1 = {
+      text = ''PS1="${prompt}"'';
+    };
+    motd = "";
   })

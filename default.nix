@@ -21,7 +21,7 @@
   # Tools
   klayout,
   klayout-pymod,
-  magic,
+  magic-vlsi,
   netgen,
   volare,
   octave,
@@ -66,7 +66,7 @@ buildPythonPackage rec {
   
   includedTools = [
     klayout
-    magic
+    magic-vlsi
     netgen
     octave
     ngspice
